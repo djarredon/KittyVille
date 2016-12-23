@@ -1,6 +1,5 @@
 public class Building {
 	protected String name;	//farm, mage's tower, etc.
-	protected float cost;
 	
 	/* 
 	 * output [0] = food
@@ -9,9 +8,11 @@ public class Building {
 	 * 		  [3] = magic
 	 * 		  [4] = population cap
 	 */
-	protected int resourceNum;
-	protected float[] baseOutput;
-	protected float[] output;
+	public final int resourceNum;
+	protected double[] baseOutput;
+	protected double[] output;
+
+	protected float cost;
 	
 	protected CatList catlist;	//list of cats	
 	protected Building next, previous;
@@ -21,23 +22,31 @@ public class Building {
 		name = null;
 		cost = 0;
 		resourceNum = 5;
-		baseOutput = new float[resourceNum];
-		output = new float[resourceNum];
+		baseOutput = new double[resourceNum];
+		output = new double[resourceNum];
 		//next = previous = null;
 	}
 	
 	public Building(String name) {
 		resourceNum = 5;
-		baseOutput = new float[resourceNum];
-		output = new float[resourceNum];
+		baseOutput = new double[resourceNum];
+		output = new double[resourceNum];
 		setName(name);
 		catlist = new CatList();
 		//next = previous = null;
 	}
+
+	public int getCount() {
+		if (catlist != null)
+			return catlist.getCount();
+		else
+			return 0;
+	}
+
 	//hunt, nipFarm, electrician, mageTower,
 	//toymaker, architect, scienceLab
 	private void setName(String name) {
-		if (name.equalsIgnoreCase("Hunt")) {
+		if (name.equalsIgnoreCase("Hunting Grounds")) {
 			cost = 0;
 			baseOutput[0] = 1;	//food
 			baseOutput[1] = 0;	//happiness
@@ -47,26 +56,12 @@ public class Building {
 		}
 		else if (name.equalsIgnoreCase("Catnip Farm")) {
 			cost = 100;
-			baseOutput[0] = 1;	//food
+			baseOutput[0] = 0.1;	//food
 			baseOutput[1] = 1;	//happiness
 			baseOutput[2] = 0;	//science
 			baseOutput[3] = 0;	//magic
 			baseOutput[4] = 0;	//population cap
 		}
-		/*
-		 //this will be implemented when I can decide what
-		 //electricity is for
-		  
-		else if (name.equalsIgnoreCase("Electrician")) {
-			cost = 600;
-			baseOutput = 8;
-			baseOutput[0] = 1;	//food
-			baseOutput[1] = 0;	//happiness
-			baseOutput[2] = 0;	//science
-			baseOutput[3] = 0;	//magic
-			baseOutput[4] = 0;	//population cap
-		}
-		*/
 		
 		else if (name.equalsIgnoreCase("Mage Tower")) {
 			cost = 4000;
@@ -120,7 +115,7 @@ public class Building {
 		return (int) cost;
 	}
 	
-	public float[] getOutput() {
+	public double[] getOutput() {
 		calculateOutput();
 		return output;
 	}
@@ -139,7 +134,7 @@ public class Building {
 	}
 	
 	protected void calculateOutput() {
-		float[] temp = new float[resourceNum];
+		double[] temp = new double[resourceNum];
 		if (catlist == null) {
 			for (int i = 0; i < resourceNum; ++i)
 				temp[i] = 0;
@@ -154,23 +149,4 @@ public class Building {
 		
 		output = temp;
 	}
-	
-	/*
-	public void setNext(Building next) {
-		this.next = next;
-	}
-	
-	public void setPrevious(Building previous) {
-		this.previous = previous;
-	}
-	
-	public Building getNext() {
-		return next;
-	}
-	
-	public Building getPrevious() {
-		return previous;
-	}
-	*/
-	
 }

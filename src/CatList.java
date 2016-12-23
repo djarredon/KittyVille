@@ -8,6 +8,12 @@ public class CatList {
 		head = null;
 		count = 0;
 	}
+
+	public CatList(int num) {
+		head = null;
+		count = 0;
+		addCat(num);
+	}
 	
 	public void displayAll() {
 		if (count == 1)
@@ -23,6 +29,11 @@ public class CatList {
 	
 	public int getCount() {
 		return count;
+	}
+
+	public void addCat(int num) {
+		for (int i = 0; i < num; ++i)
+			addCat(new Cat());
 	}
 	
 	public void addCat(Cat toAdd) {
@@ -59,33 +70,38 @@ public class CatList {
 			}
 		}
 	}
-	
-	public void removeCat() {
+
+	public Cat removeCat() {
 		if (head == null)
-			return;
-		
+			return null;
+		Cat temp = head;
 		head = head.getNext();
-		head.setPrevious(null);
+		if (head != null)
+			head.setPrevious(null);
 		--count;
+
+		return temp;
 	}
 	
-	public boolean removeCat(String toRemove) {
+	public Cat removeCat(String toRemove) {
 		if (head == null)
-			return false;
+			return null;
 		
 		CatNode current = head;
 		while (current != null) {
 			if (current.getName().equalsIgnoreCase(toRemove)) {
+				Cat temp = current;
 				if (current.getNext() != null)
 					current.getNext().setPrevious(current.getPrevious());
 				if (current.getPrevious() != null)
 					current.getPrevious().setNext(current.getNext());
 				--count;
-				return true;
+
+				return temp;
 			}
 			current = current.getNext();
 		}
-		return false;
+		return null;
 	}
 
 }
