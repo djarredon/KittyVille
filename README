@@ -1,0 +1,17 @@
+# CatTown
+Kitty worker resource allocation / town building game
+
+Game includes
+  * Set of Kitties (different breeds/colors)
+  * Set of hats corresponding to job
+  * Set of Jobs
+    > Hunt for Mice     ->  When enough food is gathered, new cats move into town
+    > Farm for Catnip   ->  Catnip raises happiness. Low happiness will cause cats to leave
+    > Electrician       ->  Used for something, maybe powering buildings?
+    > Toymaker          ->  Builds cat toys (which raise happiness)
+    > Magician          ->  Researchs spells (like summon MegaCat, or Temporal Compression)
+    > Scientist         ->  Researchs technologies (maybe multiple trees: biology, physics, chemistry)
+    > Architect         ->  Builds Cat Trees (increase population max) and maybe other stuff.
+  * Population can be allocated into different jobs
+  * Mega-Cats!!
+    > Lions, bobcats, tigers, etc. These cats can do the job of many smaller cat.
