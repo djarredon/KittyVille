@@ -57,7 +57,7 @@ public class Building {
 		else if (name.equalsIgnoreCase("Catnip Farm")) {
 			cost = 100;
 			baseOutput[0] = 0.1;	//food
-			baseOutput[1] = 1;	//happiness
+			baseOutput[1] = 0.1;	//happiness
 			baseOutput[2] = 0;	//science
 			baseOutput[3] = 0;	//magic
 			baseOutput[4] = 0;	//population cap

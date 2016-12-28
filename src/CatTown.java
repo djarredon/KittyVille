@@ -60,6 +60,23 @@ public class CatTown extends JFrame{
 		repaint();
 		getContentPane().removeAll();
 
+		/*
+		food
+			-.5 food per cat
+		happiness
+			-.1 happiness per cat
+			-.5 happiness if food < 0
+		science
+		magic
+		population cap
+		 */
+		food -= .5 * population;
+		happiness -= .1 * population;
+		if (food < 0)
+			happiness -= .5;
+
+
+
 		c = getContentPane();
 		c.add(resources());
 		c.add(Hunt(true));
@@ -144,8 +161,14 @@ public class CatTown extends JFrame{
 		buyCat.setLocation(30,60);
 		buyCat.setSize(150, 30);
 
+		JTextField buyCatDescription = new JTextField("  Cats cost 100 food each");
+		buyCatDescription.setEditable(false);
+		buyCatDescription.setLocation(30, 100);
+		buyCatDescription.setSize(150, 30);
+
 
 		catPanel.add(buyCat);
+		catPanel.add(buyCatDescription);
 
 		buyCat.addActionListener(new ActionListener() {
 			@Override
@@ -274,9 +297,9 @@ public class CatTown extends JFrame{
 			double[] array = hunt.getOutput();
 			JTextArea outputText;
 			if (array == null)
-				outputText = new JTextArea("Resources per click: 0" );
+				outputText = new JTextArea("Resources per tick: 0" );
 			else
-				outputText = new JTextArea("Resources per click:\n" + arrayToString(array) );
+				outputText = new JTextArea("Resources per tick:\n" + arrayToString(array) );
 
 			outputText.setEditable(false);
 			outputText.setSize(150, 100);
