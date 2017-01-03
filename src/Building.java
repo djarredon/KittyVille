@@ -12,7 +12,7 @@ public class Building {
 	protected double[] baseOutput;
 	protected double[] output;
 
-	protected float cost;
+	protected int cost;
 	
 	protected CatList catlist;	//list of cats	
 	protected Building next, previous;
@@ -57,7 +57,7 @@ public class Building {
 		else if (name.equalsIgnoreCase("Catnip Farm")) {
 			cost = 100;
 			baseOutput[0] = 0.1;	//food
-			baseOutput[1] = 0.1;	//happiness
+			baseOutput[1] = 0.2;	//happiness
 			baseOutput[2] = 0;	//science
 			baseOutput[3] = 0;	//magic
 			baseOutput[4] = 0;	//population cap
@@ -84,10 +84,10 @@ public class Building {
 		else if (name.equalsIgnoreCase("Architecture Firm")) {
 			cost = 800;
 			baseOutput[0] = 0;	//food
-			baseOutput[1] = 1;	//happiness
+			baseOutput[1] = .01;	//happiness
 			baseOutput[2] = 0;	//science
 			baseOutput[3] = 0;	//magic
-			baseOutput[4] = 1;	//population cap
+			baseOutput[4] = .05;	//population cap
 		}
 		
 		else if (name.equalsIgnoreCase("Science Lab")) {
@@ -112,7 +112,15 @@ public class Building {
 	}
 	
 	public int getCost() {
-		return (int) cost;
+		return cost;
+	}
+
+	public boolean hasCats() {
+		if (catlist == null)
+			return false;
+		if (catlist.getCount() <= 0)
+			return false;
+		return true;
 	}
 	
 	public double[] getOutput() {
@@ -131,6 +139,18 @@ public class Building {
 			catlist = new CatList();
 		
 		catlist.addCatList(toAdd);
+	}
+
+	public Cat removeCat() {
+		if (catlist == null)
+			return null;
+		return catlist.removeCat();
+	}
+
+	public Cat removeCat(String name) {
+		if (catlist == null)
+			return null;
+		return catlist.removeCat(name);
 	}
 	
 	protected void calculateOutput() {

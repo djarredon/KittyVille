@@ -14,6 +14,11 @@ public class CatList {
 		count = 0;
 		addCat(num);
 	}
+
+	public CatList(Cat first) {
+		head = new CatNode(first);
+		count = 1;
+	}
 	
 	public void displayAll() {
 		if (count == 1)
