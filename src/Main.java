@@ -5,6 +5,7 @@ public class Main {
 
 	public static void main (String [] args) {
 		run();
+		//catTest();
 	}
 	
 	public static void run() {
@@ -36,5 +37,9 @@ public class Main {
 		catlist.addCatList(list2);
 		
 		catlist.displayAll();
+
+		Building building = new Building("Hunting Grounds");
+		building.addCatList(catlist);
+		building.display();
 	}
 }

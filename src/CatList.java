@@ -16,8 +16,14 @@ public class CatList {
 	}
 
 	public CatList(Cat first) {
-		head = new CatNode(first);
-		count = 1;
+		if (first != null) {
+			head = new CatNode(first);
+			count = 1;
+		}
+		else {
+			head = null;
+			count = 0;
+		}
 	}
 	
 	public void displayAll() {
@@ -30,6 +36,35 @@ public class CatList {
 			current.display();
 			current = current.getNext();
 		}
+	}
+
+	public void copy(CatList toCopy) {
+		if (toCopy.head == null) {
+			head = null;
+			count = 0;
+		}
+		else {
+			head = new CatNode(toCopy.head);
+			CatNode copyCurrent = toCopy.head;
+			CatNode current = head;
+
+			while (copyCurrent != null) {
+				current.setNext(new CatNode(copyCurrent));
+				current = current.getNext();
+				copyCurrent = copyCurrent.getNext();
+			}
+		}
+	}
+
+	public CatList empty() {
+		if (head == null)
+			return null;
+		CatList temp = new CatList();
+		temp.copy(this);
+
+		head = null;
+		count = 0;
+		return temp;
 	}
 	
 	public int getCount() {
@@ -63,8 +98,10 @@ public class CatList {
 		if (toAdd == null || toAdd.head == null)
 			return;
 		else {
-			if (head == null)
+			if (head == null) {
 				head = toAdd.head;
+				this.count = toAdd.count;
+			}
 			else {
 				CatNode tail = head;
 				while (tail.getNext() != null) {

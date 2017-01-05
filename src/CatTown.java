@@ -1,5 +1,3 @@
-import javafx.geometry.HPos;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,88 +13,89 @@ public class CatTown extends JFrame{
 						toymaker, architect, scienceLab;
 
 	//resources
-	protected int startingHappiness;
 	protected double food, happiness, science, magic, popCap;
-	protected double[] perSecond;
+	protected double[] perTick;
 
-	Timer timer;
+	//
+	protected int screenNum;
+	protected Timer timer;
+	protected int tick;
 	protected int xMax, yMax;
+	protected Dimension textFieldSize = new Dimension(150, 20);
+	protected Dimension textAreaSize = new Dimension(150, 100);
 	private Container c;
 	
 	public CatTown(String name) {
 		super(name);
+		//screen size and name
 		this.name = name;
-		this.xMax = 700;
-		this.yMax = 700;
+		this.xMax = 1000;
+		this.yMax = 900;
 		setSize(this.xMax, this.yMax);
-		
+
+		//starting values
 		population = 3;
-		popCap = 10;
-		unemployed = new CatList(population);
+		popCap = 12;
+		unemployed = new CatList();
+		happiness = 12;
+		food = 120;
 
-		happiness = startingHappiness = 10;
-		food = 50;
-
-		perSecond = new double[5];
+		//initialize perTick values
+		perTick = new double[5];
 		for (int i = 0; i < 5; ++i)
-			perSecond[i] = 0;
-		
-		hunt = new Building("Hunting Grounds");
+			perTick[i] = 0;
 
+		//initialize buildings
+		hunt = new Building("Hunting Grounds");
+		hunt.addCatList(new CatList(population));
 		nipFarm = electrician = mageTower = toymaker
 				= architect = scienceLab 
 				= null;
 
+		//initialize screen
 		c = null;
 		setLayout(null);
 
+		//refresh rate
+		tick = 0;
 		timer = new Timer(100, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				openScreen();
+				++tick;
+				choosePage();
 			}
 		});
 
-		screenOne();
-		//openScreen();
-	}
-
-	private void screenOne() {
+		//start program
 		timer.start();
 	}
+
+	private void choosePage() {
+		/*
+		screenNum
+			0 = main screen
+			1 = tech screen
+			2 = magic screen
+		 */
+		switch (screenNum) {
+			case 0:
+				mainScreen();
+				break;
+			case 1:
+				techScreen();
+				break;
+			case 2:
+				magicScreen();
+				break;
+			default:
+				mainScreen();
+		}
+	}
 	
-	private void openScreen() {
+	private void mainScreen() {
 		repaint();
 		getContentPane().removeAll();
 
-		//get base resources per tick
-		for (int i = 0; i < 5; ++i) {
-			if (hunt != null)
-				perSecond[i] = hunt.getOutput()[i];
-			if (nipFarm != null)
-				perSecond[i] += nipFarm.getOutput()[i];
-			if (electrician != null)
-				perSecond[i] += electrician.getOutput()[i];
-			if (mageTower != null)
-				perSecond[i] += mageTower.getOutput()[i];
-			if (toymaker != null)
-				perSecond[i] += toymaker.getOutput()[i];
-			if (architect != null)
-				perSecond[i] += architect.getOutput()[i];
-			if (scienceLab != null)
-				perSecond[i] += scienceLab.getOutput()[i];
-		}
-		//apply penalties
-		perSecond[0] -= .5 * population;	//food per cat
-		perSecond[1] -= .01 * population;	//happiness per cat
-		//apply resources
-		food += perSecond[0];
-		happiness += perSecond[1];
-		if (food < 0)
-			happiness += perSecond[1];
-		science += perSecond[2];
-		magic += perSecond[3];
-		popCap += perSecond[4];
 
 		c = getContentPane();
 		c.add(resources());
@@ -104,46 +103,161 @@ public class CatTown extends JFrame{
 		c.add(Farm(nipFarm != null));
 		c.add(ScienceLab(scienceLab != null));
 		c.add(ArchitectFirm(architect != null));
-
+		c.add(MagicTower(mageTower != null));
 
 		c.add(catArea());
-		
 	}
 
 	private void techScreen() {
 		//On this screen the player can buy tech upgrades.
-
 		repaint();
 		getContentPane().removeAll();
+		c = getContentPane();
 
-		Dimension buttonSize = new Dimension(200, 30);
+		Dimension buttonSize = new Dimension(300, 30);
 
 		//back button
 		JButton back = new JButton("Back");
-		back.setLocation(20, 20);
+		back.setLocation(xMax/2 - buttonSize.width/2, yMax - buttonSize.height - 50);
 		back.setSize(buttonSize);
 
 		//buttons for upgrades
-		JButton upgradeHunt = new JButton("Upgrade Hunt");
+		JButton upgradeHunt = new JButton("Upgrade Hunt (Level "
+				+ hunt.getUpgradeLevel() + ")  Cost: " + hunt.getUpgradeCost() );
+		if (science < hunt.getUpgradeCost())
+			upgradeHunt.setForeground(Color.red);
 		upgradeHunt.setLocation(20, 100);
+		upgradeHunt.setSize(buttonSize);
 
 
+
+		c.add(resources());
+		c.add(back);
+		//upgrade buttons
+		c.add(upgradeHunt);
+
+		//upgrade farm output
+		if (nipFarm != null) {
+			JButton upgradeFarm = new JButton("Upgrade Farm (Level "
+					+ nipFarm.getUpgradeLevel() + ") Cost: " + nipFarm.getUpgradeCost());
+			if (science < nipFarm.getUpgradeCost())
+				upgradeFarm.setForeground(Color.red);
+			upgradeFarm.setLocation(20, 150);
+			upgradeFarm.setSize(buttonSize);
+
+			c.add(upgradeFarm);
+
+			upgradeFarm.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int temp = nipFarm.getUpgradeCost();
+					if (science >= temp) {
+						if (nipFarm.upgrade())
+							science -= temp;
+					}
+				}
+			});
+		}
+		//upgrade science output
+		if (scienceLab != null) {
+			JButton upgradeLab = new JButton("Upgrade Lab (Level "
+					+ scienceLab.getUpgradeLevel() + ") Cost: " + scienceLab.getUpgradeCost());
+			if (science < scienceLab.getUpgradeCost())
+				upgradeLab.setForeground(Color.red);
+			upgradeLab.setLocation(20, 200);
+			upgradeLab.setSize(buttonSize);
+
+			c.add(upgradeLab);
+
+			upgradeLab.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int temp = scienceLab.getUpgradeCost();
+					if (science >= temp) {
+						if (scienceLab.upgrade())
+							science -= temp;
+					}
+				}
+			});
+		}
+		//upgrade Mage Tower
+		if (mageTower != null) {
+			JButton upgradeTower = new JButton("Upgrade Tower (Level "
+					+ mageTower.getUpgradeLevel() + ") Cost: " + mageTower.getUpgradeCost());
+			if (science < mageTower.getUpgradeCost())
+				upgradeTower.setForeground(Color.red);
+			upgradeTower.setLocation(20, 250);
+			upgradeTower.setSize(buttonSize);
+
+			c.add(upgradeTower);
+
+			upgradeTower.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					int temp = mageTower.getUpgradeCost();
+					if (science >= temp) {
+						if (mageTower.upgrade())
+							science -= temp;
+					}
+				}
+			});
+		}
+
+		back.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				screenNum = 0;
+			}
+		});
+
+		upgradeHunt.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int temp = hunt.getUpgradeCost();
+				if (science >= temp) {
+					if (hunt.upgrade())
+						science -= temp;
+				}
+			}
+		});
+
+	}
+
+	/*
+		Spells
+			* Summon megacat
+			* Summon food
+			* Create Happiness
+			*
+	 */
+	private void magicScreen() {
+		//cast spells
+		repaint();
+		getContentPane().removeAll();
+
+		Dimension buttonSize = new Dimension(300, 30);
+
+		//back button
+		JButton back = new JButton("Back");
+		back.setLocation(xMax/2 - buttonSize.width/2, yMax - buttonSize.height - 50);
+		back.setSize(buttonSize);
+
+		//buttons for spells
 
 
 
 		c = getContentPane();
 
 		c.add(back);
-
+		c.add(resources());
 
 
 		back.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				openScreen();
+				screenNum = 0;
 			}
 		});
-
 	}
 
 	/*
@@ -157,86 +271,134 @@ public class CatTown extends JFrame{
 	 * 		  food, happiness, science, magic, popCap;
 	 */
 	private JPanel resources() {
+		if (tick % 3 == 0)
+			calculateResources();
+
+		//GUI
 		JPanel resourcePanel = new JPanel(null);
-		resourcePanel.setSize(650, 60);
+		resourcePanel.setSize(xMax - 50, 60);
 		resourcePanel.setLocation(10,10);
 		resourcePanel.setBackground(Color.LIGHT_GRAY);
 
 		JTextField popCount = new JTextField("Population: " + population);
 		popCount.setEditable(false);
-		popCount.setSize(100, 20);
+		popCount.setSize(120, 20);
 		popCount.setLocation(10,10);
 
 		JTextField unemployedCount = new JTextField("Unemployed: " + unemployed.getCount());
 		unemployedCount.setEditable(false);
-		unemployedCount.setSize(100, 20);
+		unemployedCount.setSize(120, 20);
 		unemployedCount.setLocation(10, 30);
 
 		JTextField popCapCount = new JTextField("Population Max: " + format(popCap));
 		popCapCount.setEditable(false);
-		popCapCount.setSize(150, 20);
-		popCapCount.setLocation(120, 10);
+		popCapCount.setSize(170, 20);
+		popCapCount.setLocation(140, 10);
 
-		JTextField foodCount = new JTextField("Food: " + format(food)
-				+ "  per tick: " + format(perSecond[0]));
+		//food count and per tick
+		JTextField foodCount = new JTextField("Food: " + format(food));
 		foodCount.setEditable(false);
-		foodCount.setSize(200, 20);
-		foodCount.setLocation(280,10);
+		foodCount.setSize(130, 20);
+		foodCount.setLocation(320,10);
+		JTextField foodTick = new JTextField("per tick: " + format(perTick[0]));
+		foodTick.setEditable(false);
+		foodTick.setSize(90, 20);
+		foodTick.setLocation(450, 10);
 
-		JTextField happyCount = new JTextField("Happiness: " + format(happiness)
-				+ "  per tick: " + format(perSecond[1]));
+		//happy count and per tick
+		JTextField happyCount = new JTextField("Happiness: " + format(happiness));
 		happyCount.setEditable(false);
-		happyCount.setSize(200, 20);
-		happyCount.setLocation(280, 30);
+		happyCount.setSize(130, 20);
+		happyCount.setLocation(320, 30);
+		JTextField happyTick = new JTextField("per tick: " + format(perTick[1]));
+		happyTick.setEditable(false);
+		happyTick.setSize(90,20);
+		happyTick.setLocation(450, 30);
 
-		JTextField scienceCount = new JTextField("Science: " + format(science)
-				+ "  per tick: " + format(perSecond[2]));
+		//science count and per tick
+		JTextField scienceCount = new JTextField("Science: " + format(science));
 		scienceCount.setEditable(false);
-		scienceCount.setSize(150, 20);
-		scienceCount.setLocation(490, 10);
+		scienceCount.setSize(130, 20);
+		scienceCount.setLocation(550, 10);
+		JTextField scienceTick = new JTextField("per tick: " + format(perTick[2]));
+		scienceTick.setEditable(false);
+		scienceTick.setSize(90,20);
+		scienceTick.setLocation(680, 10);
 
-		JTextField magicCount = new JTextField("Magic: " + format(magic)
-				+ "  per tick: " + format(perSecond[3]));
+		//magic count and per tick
+		JTextField magicCount = new JTextField("Magic: " + format(magic));
 		magicCount.setEditable(false);
-		magicCount.setSize(150, 20);
-		magicCount.setLocation(490, 30);
+		magicCount.setSize(130, 20);
+		magicCount.setLocation(550, 30);
+		JTextField magicTick = new JTextField("per tick: " + format(perTick[3]));
+		magicTick.setEditable(false);
+		magicTick.setSize(90,20);
+		magicTick.setLocation(680, 30);
 
 
 		resourcePanel.add(popCount);
 		resourcePanel.add(unemployedCount);
 		resourcePanel.add(popCapCount);
-
 		resourcePanel.add(foodCount);
+		resourcePanel.add(foodTick);
 		resourcePanel.add(happyCount);
+		resourcePanel.add(happyTick);
 		resourcePanel.add(scienceCount);
+		resourcePanel.add(scienceTick);
 		resourcePanel.add(magicCount);
+		resourcePanel.add(magicTick);
 
 		return resourcePanel;
 	}
 
 	private JPanel catArea() {
 		JPanel catPanel = new JPanel(null);
-		catPanel.setSize(200, 200);
-		catPanel.setLocation(240, 320);
+		catPanel.setSize(300, 200);
+		catPanel.setLocation(340, 320);
 		catPanel.setBackground(Color.LIGHT_GRAY);
 
-		JButton buyCat = new JButton("Recruit Cat");
-		buyCat.setLocation(30,60);
-		buyCat.setSize(150, 30);
+		JButton buyCat = new JButton("Recruit Cat (100 Food)");
+		buyCat.setLocation(25,10);
+		buyCat.setSize(175, 30);
 
-		JTextField buyCatDescription = new JTextField("  Cats cost 100 food each");
-		buyCatDescription.setEditable(false);
-		buyCatDescription.setLocation(30, 100);
-		buyCatDescription.setSize(150, 30);
-
-		JButton techButton = new JButton("Tech Tree");
-		techButton.setSize(150, 30);
-		techButton.setLocation(30, 160);
-
+		JButton buyTenCats = new JButton("x10");
+		if (food < 1000 || popCap - population <= 10)
+			buyTenCats.setForeground(Color.red);
+		buyTenCats.setLocation(200, 10);
+		buyTenCats.setSize(75, 30);
 
 		catPanel.add(buyCat);
-		catPanel.add(buyCatDescription);
-		catPanel.add(techButton);
+		catPanel.add(buyTenCats);
+
+		if (scienceLab != null) {
+			JButton techButton = new JButton("Tech Tree");
+			techButton.setSize(250, 30);
+			techButton.setLocation(25, 50);
+
+			catPanel.add(techButton);
+
+			techButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					screenNum = 1;
+				}
+			});
+		}
+
+		if (mageTower != null) {
+			JButton magicButton = new JButton("Spells");
+			magicButton.setSize(250, 30);
+			magicButton.setLocation(25, 90);
+
+			catPanel.add(magicButton);
+
+			magicButton.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					screenNum = 2;
+				}
+			});
+		}
 
 		buyCat.addActionListener(new ActionListener() {
 			@Override
@@ -245,41 +407,132 @@ public class CatTown extends JFrame{
 					food -= 100;
 					unemployed.addCat(1);
 					++population;
-					openScreen();
 				}
 			}
 		});
 
-		techButton.addActionListener(new ActionListener() {
+		buyTenCats.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				techScreen();
+				if (food >= 1000 && population + 10 < popCap) {
+					food -= 1000;
+					unemployed.addCat(10);
+					population += 10;
+				}
 			}
 		});
 
 		return catPanel;
 	}
 
+	private JPanel MagicTower(boolean activated) {
+		JPanel magePanel = new JPanel(null);
+		magePanel.setSize(300, 200);
+		magePanel.setLocation(660, 320);
+		magePanel.setBackground(Color.cyan);
+
+		if (!activated) {
+			//purchase screen
+			Building temp = new Building("Mage Tower");
+			JButton buyMage = new JButton("Buy Mage Tower ("
+					+ temp.getCost() + " Food)");
+			buyMage.setLocation(25, 60);
+			buyMage.setSize(250, 30);
+
+			magePanel.add(buyMage);
+
+			buyMage.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (food >= temp.getCost()) {
+						mageTower = new Building("Mage Tower");
+						food -= mageTower.getCost();
+					}
+				}
+			});
+		}
+		else {
+			//show Science Details
+			JTextField towerText = new JTextField(mageTower.getName() + " Level "
+					+ mageTower.getUpgradeLevel());
+			towerText.setSize(textFieldSize);
+			towerText.setLocation(10,10);
+			towerText.setEditable(false);
+
+			JTextField mageText = new JTextField("Mages: " + mageTower.getCount());
+			mageText.setEditable(false);
+			mageText.setSize(textFieldSize);
+			mageText.setLocation(10, 30);
+
+			double[] array = mageTower.getOutput();
+			JTextArea outputText;
+			if (array == null)
+				outputText = new JTextArea("Resources per tick: 0" );
+			else
+				outputText = new JTextArea("Resources per tick:\n" + arrayToString(array) );
+
+			outputText.setEditable(false);
+			outputText.setSize(textAreaSize);
+			outputText.setLocation(10, 50);
+
+
+			magePanel.add(mageText);
+			magePanel.add(outputText);
+
+
+			JButton addMageCat = new JButton("Add Cat");
+			addMageCat.setLocation(10, 160);
+			addMageCat.setSize(80, 30);
+
+			JButton removeMageCat = new JButton("Remove");
+			removeMageCat.setLocation(100, 160);
+			removeMageCat.setSize(80,30);
+
+			magePanel.add(towerText);
+			magePanel.add(addMageCat);
+			magePanel.add(removeMageCat);
+
+			addMageCat.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (unemployed != null && unemployed.getCount() > 0)
+						mageTower.addCat(unemployed.removeCat());
+				}
+			});
+
+			removeMageCat.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (mageTower.hasCats()) {
+						if (unemployed == null)
+							unemployed = new CatList(mageTower.removeCat());
+						else
+							unemployed.addCat(mageTower.removeCat());
+					}
+				}
+			});
+
+		}
+
+
+		return magePanel;
+	}
+
 	private JPanel ArchitectFirm(boolean activated) {
 		JPanel architectPanel = new JPanel(null);
-		architectPanel.setSize(200, 200);
+		architectPanel.setSize(300, 200);
 		architectPanel.setLocation(20, 320);
 		architectPanel.setBackground(Color.MAGENTA);
 
 		if (!activated) {
 			//show purchase screen
 			Building temp = new Building("Architecture Firm");
-			JButton buyFirm = new JButton("Buy Architecture Firm");
-			buyFirm.setLocation(20, 60);
-			buyFirm.setSize(170, 30);
-
-			JTextField firmCost = new JTextField("  " + temp.getCost() + " Food");
-			firmCost.setEditable(false);
-			firmCost.setLocation(75, 100);
-			firmCost.setSize(75, 30);
+			JButton buyFirm = new JButton("Buy Architecture Firm ("
+					+ temp.getCost() + " Food)");
+			buyFirm.setLocation(25, 60);
+			buyFirm.setSize(250, 30);
 
 			architectPanel.add(buyFirm);
-			architectPanel.add(firmCost);
 
 			buyFirm.addActionListener(new ActionListener() {
 				@Override
@@ -287,21 +540,21 @@ public class CatTown extends JFrame{
 					if (food >= temp.getCost()) {
 						architect = new Building("Architecture Firm");
 						food -= architect.getCost();
-						openScreen();
 					}
 				}
 			});
 		}
 		else {
 			//show Science Details
-			JTextField firmText = new JTextField(architect.getName());
-			firmText.setSize(150,20);
+			JTextField firmText = new JTextField(architect.getName()
+					+ " Level " + architect.getUpgradeLevel());
+			firmText.setSize(textFieldSize);
 			firmText.setLocation(10,10);
 			firmText.setEditable(false);
 
 			JTextField drafterText = new JTextField("Architects: " + architect.getCount());
 			drafterText.setEditable(false);
-			drafterText.setSize(150, 20);
+			drafterText.setSize(textFieldSize);
 			drafterText.setLocation(10, 30);
 
 			double[] array = architect.getOutput();
@@ -312,7 +565,7 @@ public class CatTown extends JFrame{
 				outputText = new JTextArea("Resources per tick:\n" + arrayToString(array) );
 
 			outputText.setEditable(false);
-			outputText.setSize(150, 100);
+			outputText.setSize(textAreaSize);
 			outputText.setLocation(10, 50);
 
 
@@ -339,7 +592,7 @@ public class CatTown extends JFrame{
 				public void actionPerformed(ActionEvent e) {
 					if (unemployed != null && unemployed.getCount() > 0)
 						architect.addCat(unemployed.removeCat());
-					openScreen();
+					//mainScreen();
 				}
 			});
 
@@ -363,24 +616,19 @@ public class CatTown extends JFrame{
 
 	private JPanel ScienceLab(boolean activated) {
 		JPanel sciencePanel = new JPanel(null);
-		sciencePanel.setSize(200,200);
-		sciencePanel.setLocation(460,100);
+		sciencePanel.setSize(300,200);
+		sciencePanel.setLocation(660,100);
 		sciencePanel.setBackground(Color.blue);
 
 		if (!activated) {
 			//show purchase screen
 			Building temp = new Building("Science Lab");
-			JButton buyLab = new JButton("Buy Science Lab");
-			buyLab.setLocation(30, 60);
-			buyLab.setSize(150, 30);
-
-			JTextField labCost = new JTextField("  " + temp.getCost() + " Food");
-			labCost.setEditable(false);
-			labCost.setLocation(75, 100);
-			labCost.setSize(75, 30);
+			JButton buyLab = new JButton("Buy Science Lab ("
+					+ temp.getCost() + " Food)");
+			buyLab.setLocation(25, 60);
+			buyLab.setSize(250, 30);
 
 			sciencePanel.add(buyLab);
-			sciencePanel.add(labCost);
 
 			buyLab.addActionListener(new ActionListener() {
 				@Override
@@ -388,21 +636,21 @@ public class CatTown extends JFrame{
 					if (food >= temp.getCost()) {
 						scienceLab = new Building("Science Lab");
 						food -= scienceLab.getCost();
-						openScreen();
 					}
 				}
 			});
 		}
 		else {
 			//show Science Details
-			JTextField labText = new JTextField(scienceLab.getName());
-			labText.setSize(150,20);
+			JTextField labText = new JTextField(scienceLab.getName()
+					+ " Level " + scienceLab.getUpgradeLevel());
+			labText.setSize(textFieldSize);
 			labText.setLocation(10,10);
 			labText.setEditable(false);
 
 			JTextField researcherText = new JTextField("Scientists: " + scienceLab.getCount());
 			researcherText.setEditable(false);
-			researcherText.setSize(150, 20);
+			researcherText.setSize(textFieldSize);
 			researcherText.setLocation(10, 30);
 
 			double[] array = scienceLab.getOutput();
@@ -413,7 +661,7 @@ public class CatTown extends JFrame{
 				outputText = new JTextArea("Resources per tick:\n" + arrayToString(array) );
 
 			outputText.setEditable(false);
-			outputText.setSize(150, 100);
+			outputText.setSize(textAreaSize);
 			outputText.setLocation(10, 50);
 
 
@@ -440,7 +688,7 @@ public class CatTown extends JFrame{
 				public void actionPerformed(ActionEvent e) {
 					if (unemployed != null && unemployed.getCount() > 0)
 						scienceLab.addCat(unemployed.removeCat());
-					openScreen();
+					//mainScreen();
 				}
 			});
 
@@ -464,24 +712,18 @@ public class CatTown extends JFrame{
 
 	private JPanel Farm(boolean activated) {
 		JPanel farmPanel = new JPanel(null);
-		farmPanel.setSize(200,200);
-		farmPanel.setLocation(240,100);
+		farmPanel.setSize(300,200);
+		farmPanel.setLocation(340,100);
 		farmPanel.setBackground(Color.cyan);
 
 		if (!activated) {
 			Building temp = new Building("Catnip Farm");
-			JButton buyFarm = new JButton("Buy Catnip Farm");
-			buyFarm.setLocation(30, 60);
-			buyFarm.setSize(150, 30);
-
-			JTextField farmCost = new JTextField("   " +temp.getCost() + " Food");
-			farmCost.setEditable(false);
-			farmCost.setLocation(75, 100);
-			farmCost.setSize(75, 30);
-
+			JButton buyFarm = new JButton("Buy Catnip Farm ("
+					+ temp.getCost() + " Food)");
+			buyFarm.setLocation(25, 60);
+			buyFarm.setSize(250, 30);
 
 			farmPanel.add(buyFarm);
-			farmPanel.add(farmCost);
 
 			buyFarm.addActionListener(new ActionListener() {
 				@Override
@@ -489,20 +731,20 @@ public class CatTown extends JFrame{
 					if (food >= temp.getCost()) {
 						nipFarm = new Building("Catnip Farm");
 						food -= nipFarm.getCost();
-						openScreen();
 					}
 				}
 			});
 		}
 		else {
-			JTextField farmText = new JTextField(nipFarm.getName());
-			farmText.setSize(150,20);
+			JTextField farmText = new JTextField(nipFarm.getName()
+					+ " Level " + nipFarm.getUpgradeLevel());
+			farmText.setSize(textFieldSize);
 			farmText.setLocation(10,10);
 			farmText.setEditable(false);
 
 			JTextField workerText = new JTextField("Farmers: " + nipFarm.getCount());
 			workerText.setEditable(false);
-			workerText.setSize(150, 20);
+			workerText.setSize(textFieldSize);
 			workerText.setLocation(10, 30);
 
 			double[] array = nipFarm.getOutput();
@@ -513,7 +755,7 @@ public class CatTown extends JFrame{
 				outputText = new JTextArea("Resources per tick:\n" + arrayToString(array) );
 
 			outputText.setEditable(false);
-			outputText.setSize(150, 100);
+			outputText.setSize(textAreaSize);
 			outputText.setLocation(10, 50);
 
 
@@ -540,7 +782,7 @@ public class CatTown extends JFrame{
 				public void actionPerformed(ActionEvent e) {
 					if (unemployed != null && unemployed.getCount() > 0)
 						nipFarm.addCat(unemployed.removeCat());
-					openScreen();
+					//mainScreen();
 				}
 			});
 
@@ -563,20 +805,21 @@ public class CatTown extends JFrame{
 
 	private JPanel Hunt(boolean activated) {
 		JPanel huntPanel = new JPanel(null);
-		huntPanel.setSize(200,200);
+		huntPanel.setSize(300,200);
 		huntPanel.setLocation(20,100);
 		huntPanel.setBackground(Color.GREEN);
 
 
-		JTextField huntText = new JTextField(hunt.getName());
-		huntText.setSize(150,20);
+		JTextField huntText = new JTextField(hunt.getName()
+				+ " Level " + hunt.getUpgradeLevel());
+		huntText.setSize(textFieldSize);
 		huntText.setLocation(10,10);
 		huntText.setEditable(false);
 
 		if (hunt != null) {
 			JTextField workerText = new JTextField("Hunters: " + hunt.getCount());
 			workerText.setEditable(false);
-			workerText.setSize(150, 20);
+			workerText.setSize(textFieldSize);
 			workerText.setLocation(10, 30);
 
 			double[] array = hunt.getOutput();
@@ -587,7 +830,7 @@ public class CatTown extends JFrame{
 				outputText = new JTextArea("Resources per tick:\n" + arrayToString(array) );
 
 			outputText.setEditable(false);
-			outputText.setSize(150, 100);
+			outputText.setSize(textAreaSize);
 			outputText.setLocation(10, 50);
 
 
@@ -614,7 +857,7 @@ public class CatTown extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if (unemployed != null && unemployed.getCount() > 0)
 					hunt.addCat(unemployed.removeCat());
-				openScreen();
+				//mainScreen();
 			}
 		});
 
@@ -631,6 +874,37 @@ public class CatTown extends JFrame{
 		});
 
 		return huntPanel;
+	}
+
+	private void calculateResources() {
+		//get base resources per tick
+		for (int i = 0; i < 5; ++i) {
+			if (hunt != null)
+				perTick[i] = hunt.getOutput()[i];
+			if (nipFarm != null)
+				perTick[i] += nipFarm.getOutput()[i];
+			if (electrician != null)
+				perTick[i] += electrician.getOutput()[i];
+			if (mageTower != null)
+				perTick[i] += mageTower.getOutput()[i];
+			if (toymaker != null)
+				perTick[i] += toymaker.getOutput()[i];
+			if (architect != null)
+				perTick[i] += architect.getOutput()[i];
+			if (scienceLab != null)
+				perTick[i] += scienceLab.getOutput()[i];
+		}
+		//apply penalties
+		perTick[0] -= .5 * population;	//food per cat
+		perTick[1] -= .02 * population;	//happiness per cat
+		//apply resources
+		food += perTick[0];
+		happiness += perTick[1];
+		if (food < 0)
+			happiness += perTick[1];
+		science += perTick[2];
+		magic += perTick[3];
+		popCap += perTick[4];
 	}
 
 	/*
