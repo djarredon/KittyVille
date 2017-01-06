@@ -38,7 +38,7 @@ public class CatTown extends JFrame{
 		popCap = 12;
 		unemployed = new CatList();
 		happiness = 12;
-		food = 120;
+		food = 150;
 
 		//initialize perTick values
 		perTick = new double[5];

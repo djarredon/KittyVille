@@ -127,6 +127,16 @@ public class Building {
 			buildingType = 5;
 			maxUpgrade = 2;
 		}
+
+		else if (name.equalsIgnoreCase("Mega Cat Pen")) {
+			cost = 2000;
+			baseOutput[0] = 0;
+			baseOutput[1] = 0;
+			baseOutput[2] = 0;
+			baseOutput[3] = 0;
+			buildingType = 6;
+			maxUpgrade = 2;
+		}
 		
 		else {
 			//default to hunt
